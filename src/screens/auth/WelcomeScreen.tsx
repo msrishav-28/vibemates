@@ -12,11 +12,11 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Image
+        {/* <Image
           source={require('../../../assets/icon.png')}
           style={styles.logo}
           resizeMode="contain"
-        />
+        /> */}
         
         <View style={styles.textContainer}>
           <Text style={styles.title}>Find Your Tribe</Text>
