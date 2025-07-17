@@ -1,6 +1,6 @@
-# Social Hobby App
+# Vibemates
 
-A React Native application built with Expo that connects people with shared hobbies and interests. Users can discover local communities, join hobby groups, and meet like-minded individuals.
+A React Native iOS application built with Expo that connects people with shared hobbies and interests. Users can discover local communities, join hobby groups, and meet like-minded individuals who share their vibe.
 
 ## Features
 
@@ -13,11 +13,12 @@ A React Native application built with Expo that connects people with shared hobb
 
 ## Tech Stack
 
-- **Framework**: React Native with Expo SDK 51
+- **Framework**: React Native with Expo SDK 51 (iOS focused)
 - **Navigation**: React Navigation (Stack & Bottom Tabs)
 - **State Management**: Zustand with AsyncStorage persistence
 - **Maps**: React Native Maps with location services
 - **Icons**: React Native Vector Icons
+- **Testing**: Jest with Expo preset
 - **Styling**: StyleSheet with design tokens
 - **TypeScript**: Full TypeScript support with path aliases
 - **Performance**: Optimized Metro bundler configuration
@@ -59,23 +60,36 @@ src/
 
 - Node.js (v14 or higher)
 - npm or yarn
-- Expo CLI: `npm install -g expo-cli`
-- Expo Go app on your phone (for testing)
+- Expo CLI: `npm install -g @expo/cli`
+- iOS Simulator (Xcode) or physical iOS device
+- Expo Go app (for testing on device)
 
 ### Installation
 
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd social-hobby-app
+cd vibemates
 ```
 
 2. Install dependencies:
 ```bash
 npm install
-# or
-yarn install
 ```
+
+### Running the App
+
+1. Start the Expo development server:
+```bash
+npm start
+```
+
+2. Run on iOS:
+```bash
+npm run ios
+```
+
+Or scan the QR code with your iOS device using the Expo Go app.
 
 3. Start the development server:
 ```bash
