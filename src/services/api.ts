@@ -24,24 +24,38 @@ class ApiService {
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status}`);
+    const contentType = response.headers.get('content-type');
+    let data: any = null;
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      data = await response.text();
     }
 
-    return response.json();
+    if (!response.ok) {
+      // If data is a string, use it as the error message; otherwise, try to use data.message
+      const errorMsg = typeof data === 'string' ? data : (data && data.message) ? data.message : `API Error: ${response.status}`;
+      throw new Error(errorMsg);
+    }
+
+    // If data is a string (not JSON), just return it as-is (for success cases)
+    return data;
   }
 
   // Auth endpoints
   auth = {
     signIn: async (email: string, password: string) => {
-      const response = await this.request<{ token: string; user: any }>('/auth/signin', {
+      const response = await this.request<{ token?: string; user: any }>('/auth/signin', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
-      
-      await AsyncStorage.setItem('authToken', response.token);
-      this.token = response.token;
-      
+      if (response.token) {
+        await AsyncStorage.setItem('authToken', response.token);
+        this.token = response.token;
+      } else {
+        await AsyncStorage.removeItem('authToken');
+        this.token = null;
+      }
       return response;
     },
 
@@ -51,14 +65,17 @@ class ApiService {
       name: string;
       interests: string[];
     }) => {
-      const response = await this.request<{ token: string; user: any }>('/auth/signup', {
+      const response = await this.request<{ token?: string; user: any }>('/auth/signup', {
         method: 'POST',
         body: JSON.stringify(userData),
       });
-      
-      await AsyncStorage.setItem('authToken', response.token);
-      this.token = response.token;
-      
+      if (response.token) {
+        await AsyncStorage.setItem('authToken', response.token);
+        this.token = response.token;
+      } else {
+        await AsyncStorage.removeItem('authToken');
+        this.token = null;
+      }
       return response;
     },
 
