@@ -1,5 +1,8 @@
 import { Community, Event, User } from '../types';
 
+// Mock API service for development and testing
+// This file provides mock data and can be used as a fallback when the real API is not available
+
 // Mock data for the app
 export const mockCommunities: Community[] = [
   {
@@ -213,4 +216,249 @@ export const getEventById = async (id: string): Promise<Event | null> => {
 export const getUserById = async (id: string): Promise<User | null> => {
   await new Promise(resolve => setTimeout(resolve, 300));
   return mockUsers.find(user => user.id === id) || null;
+};
+
+// Mock API Service
+// This can be used as a fallback when the real API is not available
+export const mockApiService = {
+  // Auth endpoints
+  auth: {
+    signIn: async (email: string, password: string) => {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock authentication logic
+      if (email === 'demo@hobbyapp.com' && password === 'demo123') {
+        const token = 'mock_token_' + Date.now();
+        const user = mockUsers[0]; // Return first user as logged in user
+        
+        return { token, user };
+      } else {
+        throw new Error('Invalid credentials');
+      }
+    },
+
+    signUp: async (userData: {
+      email: string;
+      password: string;
+      name: string;
+      interests: string[];
+    }) => {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const newUser: User = {
+        id: 'user_' + Date.now(),
+        name: userData.name,
+        email: userData.email,
+        avatar: 'https://picsum.photos/100/100?random=' + Date.now(),
+        interests: userData.interests,
+        location: {
+          latitude: 34.0522,
+          longitude: -118.2437,
+          address: 'Los Angeles, CA',
+        },
+        distance: 0,
+        isOnline: true,
+        joinedAt: new Date(),
+      };
+      
+      mockUsers.push(newUser);
+      const token = 'mock_token_' + Date.now();
+      
+      return { token, user: newUser };
+    },
+
+    signOut: async () => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      // Mock sign out
+      return true;
+    },
+
+    refreshToken: async () => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return { token: 'mock_token_' + Date.now() };
+    },
+  },
+
+  // Community endpoints
+  communities: {
+    getAll: async (filters?: { category?: string; search?: string }) => {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      let filtered = [...mockCommunities];
+      
+      if (filters?.category) {
+        filtered = filtered.filter(c => c.category === filters.category);
+      }
+      
+      if (filters?.search) {
+        const searchLower = filters.search.toLowerCase();
+        filtered = filtered.filter(c => 
+          c.title.toLowerCase().includes(searchLower) ||
+          c.description.toLowerCase().includes(searchLower) ||
+          c.tags.some(tag => tag.toLowerCase().includes(searchLower))
+        );
+      }
+      
+      return filtered;
+    },
+
+    getById: async (id: string) => {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      return getCommunityById(id);
+    },
+
+    join: async (communityId: string) => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const community = mockCommunities.find(c => c.id === communityId);
+      if (community) {
+        community.isJoined = true;
+        community.memberCount += 1;
+      }
+      
+      return { success: true };
+    },
+
+    leave: async (communityId: string) => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const community = mockCommunities.find(c => c.id === communityId);
+      if (community) {
+        community.isJoined = false;
+        community.memberCount = Math.max(0, community.memberCount - 1);
+      }
+      
+      return { success: true };
+    },
+
+    create: async (communityData: {
+      title: string;
+      description: string;
+      category: string;
+      tags: string[];
+      image?: string;
+    }) => {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const newCommunity: Community = {
+        id: 'community_' + Date.now(),
+        title: communityData.title,
+        description: communityData.description,
+        category: communityData.category,
+        tags: communityData.tags,
+        image: communityData.image || `https://picsum.photos/300/200?random=${Date.now()}`,
+        memberCount: 1,
+        location: {
+          latitude: 34.0522 + (Math.random() - 0.5) * 0.1,
+          longitude: -118.2437 + (Math.random() - 0.5) * 0.1,
+          address: 'Los Angeles, CA',
+        },
+        distance: Math.floor(Math.random() * 5000),
+        isJoined: true,
+        createdBy: 'current_user',
+        createdAt: new Date(),
+      };
+      
+      mockCommunities.unshift(newCommunity);
+      return newCommunity;
+    },
+  },
+
+  // User endpoints
+  users: {
+    getNearby: async (location: { latitude: number; longitude: number }, radius = 5000) => {
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      // Mock filtering by distance
+      return mockUsers.filter(user => user.distance && user.distance <= radius);
+    },
+
+    getProfile: async (userId?: string) => {
+      await new Promise(resolve => setTimeout(resolve, 400));
+      
+      if (userId) {
+        return getUserById(userId);
+      } else {
+        // Return current user profile
+        return mockUsers[0];
+      }
+    },
+
+    updateProfile: async (updates: any) => {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Mock update logic
+      const user = mockUsers[0];
+      Object.assign(user, updates);
+      
+      return user;
+    },
+
+    uploadAvatar: async (imageUri: string) => {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Mock upload - return a new avatar URL
+      const avatarUrl = `https://picsum.photos/100/100?random=${Date.now()}`;
+      
+      return { avatarUrl };
+    },
+  },
+
+  // Comments endpoints
+  comments: {
+    getForCommunity: async (communityId: string) => {
+      await new Promise(resolve => setTimeout(resolve, 400));
+      
+      // Mock comments
+      return [
+        {
+          id: 'comment_1',
+          text: 'Great community! Looking forward to participating.',
+          authorId: 'user_1',
+          authorName: 'Alex Johnson',
+          authorAvatar: 'https://picsum.photos/50/50?random=1',
+          createdAt: new Date(Date.now() - 86400000), // 1 day ago
+          likes: 5,
+          isLiked: false,
+        },
+        {
+          id: 'comment_2',
+          text: 'When is the next meetup?',
+          authorId: 'user_2',
+          authorName: 'Sarah Chen',
+          authorAvatar: 'https://picsum.photos/50/50?random=2',
+          createdAt: new Date(Date.now() - 43200000), // 12 hours ago
+          likes: 2,
+          isLiked: true,
+        },
+      ];
+    },
+
+    create: async (communityId: string, text: string) => {
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      const newComment = {
+        id: 'comment_' + Date.now(),
+        text,
+        authorId: 'current_user',
+        authorName: 'You',
+        authorAvatar: 'https://picsum.photos/50/50?random=0',
+        createdAt: new Date(),
+        likes: 0,
+        isLiked: false,
+      };
+      
+      return newComment;
+    },
+
+    like: async (commentId: string) => {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      return { success: true, liked: true };
+    },
+
+    delete: async (commentId: string) => {
+      await new Promise(resolve => setTimeout(resolve, 400));
+      return { success: true };
+    },
+  },
 };

@@ -5,11 +5,16 @@
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
-    "start": "react-native start",
+    "start": "expo start",
+    "start:dev-client": "expo start --dev-client",
+    "start:metro": "react-native start",
+    "build:ios": "react-native run-ios --configuration Release",
+    "build:android": "react-native run-android --variant=release",
     "test": "jest",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "pod-install": "cd ios && pod install",
     "clean": "watchman watch-del-all && rm -rf node_modules && npm install && cd ios && pod install && cd ..",
+    "clean:ios": "cd ios && xcodebuild clean && cd ..",
     "reset-cache": "npx react-native start --reset-cache"
   },
   "keywords": [
