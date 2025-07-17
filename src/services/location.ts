@@ -145,7 +145,7 @@ export const locationService = {
     return distance;
   },
 
-  private deg2rad(deg: number): number {
+  deg2rad(deg: number): number {
     return deg * (Math.PI / 180);
   },
 

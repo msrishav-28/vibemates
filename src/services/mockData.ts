@@ -254,11 +254,10 @@ export const mockApiService = {
         location: {
           latitude: 34.0522,
           longitude: -118.2437,
-          address: 'Los Angeles, CA',
+          city: 'Los Angeles, CA',
         },
         distance: 0,
-        isOnline: true,
-        joinedAt: new Date(),
+        joinedCommunities: [],
       };
       
       mockUsers.push(newUser);
