@@ -1,17 +1,19 @@
-// src/store/index.ts
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Community, User } from '../types';
+import { api } from '../services/api'; // Make sure this path is correct
+import { User } from '../types'; // Make sure this path is correct
 
-// User Store
+// This interface MUST include isLoading and checkUser
 interface UserState {
   user: User | null;
   interests: string[];
   isOnboarded: boolean;
+  isLoading: boolean; // This was missing
   setUser: (user: User | null) => void;
   setInterests: (interests: string[]) => void;
   setOnboarded: (value: boolean) => void;
+  checkUser: () => Promise<void>; // This was missing
   clearUser: () => void;
 }
 
@@ -21,66 +23,35 @@ export const useUserStore = create<UserState>()(
       user: null,
       interests: [],
       isOnboarded: false,
-      setUser: (user) => set({ user }),
+      isLoading: true, // Define the initial state
+      setUser: (user) => set({ user, isLoading: false }),
       setInterests: (interests) => set({ interests }),
       setOnboarded: (value) => set({ isOnboarded: value }),
-      clearUser: () => set({ user: null, interests: [], isOnboarded: false }),
+      // Define the implementation for checkUser
+      checkUser: async () => {
+        set({ isLoading: true });
+        try {
+          // This logic checks the token and fetches the user profile
+          const token = await AsyncStorage.getItem('authToken');
+          if (token) {
+            await api.init(); // Assuming you have an init function for your API client
+            const user = await api.users.getProfile();
+            set({ user, isOnboarded: user.isOnboarded || false, isLoading: false });
+          } else {
+            set({ user: null, isLoading: false });
+          }
+        } catch (error) {
+          console.error("Failed to check user:", error);
+          await AsyncStorage.removeItem('authToken'); // Clear bad token
+          set({ user: null, isLoading: false });
+        }
+      },
+      clearUser: () => set({ user: null, interests: [], isOnboarded: false, isLoading: false }),
     }),
     {
       name: 'user-storage',
       storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({ user: state.user, interests: state.interests, isOnboarded: state.isOnboarded }),
     }
   )
 );
-
-// Communities Store
-interface CommunitiesState {
-  communities: Community[];
-  joinedCommunities: string[];
-  setCommunities: (communities: Community[]) => void;
-  joinCommunity: (communityId: string) => void;
-  leaveCommunity: (communityId: string) => void;
-  isJoined: (communityId: string) => boolean;
-}
-
-export const useCommunitiesStore = create<CommunitiesState>((set, get) => ({
-  communities: [],
-  joinedCommunities: [],
-  setCommunities: (communities) => set({ communities }),
-  joinCommunity: (communityId) =>
-    set((state) => ({
-      joinedCommunities: [...state.joinedCommunities, communityId],
-    })),
-  leaveCommunity: (communityId) =>
-    set((state) => ({
-      joinedCommunities: state.joinedCommunities.filter((id) => id !== communityId),
-    })),
-  isJoined: (communityId) => get().joinedCommunities.includes(communityId),
-}));
-
-// Map Store
-interface MapUser {
-  id: string;
-  name: string;
-  avatar?: string;
-  location: {
-    latitude: number;
-    longitude: number;
-  };
-  interests: string[];
-  distance?: number;
-}
-
-interface MapState {
-  nearbyUsers: MapUser[];
-  userLocation: { latitude: number; longitude: number } | null;
-  setNearbyUsers: (users: MapUser[]) => void;
-  setUserLocation: (location: { latitude: number; longitude: number }) => void;
-}
-
-export const useMapStore = create<MapState>((set) => ({
-  nearbyUsers: [],
-  userLocation: null,
-  setNearbyUsers: (users) => set({ nearbyUsers: users }),
-  setUserLocation: (location) => set({ userLocation: location }),
-}));

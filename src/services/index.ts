@@ -28,21 +28,22 @@ import { authService } from './auth';
 import { notificationService } from './notifications';
 import { locationService } from './location';
 import { imageService } from './image';
+import { useUserStore } from '../store';
 
 // Service initialization
 export const initializeServices = async () => {
   try {
     // Initialize API service
     await api.init();
-    
-    // Initialize auth service
-    const isAuthenticated = await authService.initialize();
-    
+
+    // Initialize user state (calls checkUser from Zustand store)
+    await useUserStore.getState().checkUser();
+
     // Initialize notification service
     await notificationService.initialize();
-    
+
     console.log('Services initialized successfully');
-    return { isAuthenticated };
+    return { isAuthenticated: !!useUserStore.getState().user };
   } catch (error) {
     console.error('Error initializing services:', error);
     return { isAuthenticated: false };

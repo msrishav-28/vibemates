@@ -37,7 +37,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ navigation }) => {
 
     try {
       await authService.signIn(email, password);
-      navigation.navigate('Home');
+      // navigation.navigate('Home'); // Removed as requested
     } catch (err: any) {
       setError(err.message || 'Failed to sign in');
     } finally {

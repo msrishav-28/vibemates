@@ -54,7 +54,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
         password,
         interests: [], // Will be set in onboarding
       });
-      navigation.navigate('HobbySelection');
+      // navigation.navigate('HobbySelection'); // Removed as requested
     } catch (err: any) {
       setError(err.message || 'Failed to sign up');
     } finally {
