@@ -1,28 +1,56 @@
 // src/navigation/AppNavigator.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
 
+// Auth Screens
+import { WelcomeScreen } from '../screens/auth/WelcomeScreen';
+import { SignInScreen } from '../screens/auth/SignInScreen';
+import { SignUpScreen } from '../screens/auth/SignUpScreen';
+
+// Main Screens
 import { HobbySelectionScreen } from '../screens/HobbySelectionScreen';
 import { HomeScreen } from '../screens/HomeScreen';
-import { SearchScreen } from '../screens/SearchScreen';
-import { CreateScreen } from '../screens/CreateScreen';
 import { CommunityDetailScreen } from '../screens/CommunityDetailScreen';
 import { MapScreen } from '../screens/MapScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+
+// Components
+import { LoadingSpinner } from '../components/LoadingSpinner';
+
+// Services & Store
+import { authService } from '../services/auth';
+import { useUserStore } from '../store';
 import { tokens } from '../theme/tokens';
 
-const Stack = createStackNavigator();
+const AuthStack = createStackNavigator();
+const MainStack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
+// Auth Stack Navigator
+const AuthNavigator = () => {
+  return (
+    <AuthStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        gestureEnabled: true,
+      }}>
+      <AuthStack.Screen name="Welcome" component={WelcomeScreen} />
+      <AuthStack.Screen name="SignIn" component={SignInScreen} />
+      <AuthStack.Screen name="SignUp" component={SignUpScreen} />
+    </AuthStack.Navigator>
+  );
+};
+
+// Bottom Tab Navigator
 const HomeTabs = () => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
+          let iconName: string = 'home-outline';
           
           if (route.name === 'HomeTab') {
             iconName = focused ? 'home' : 'home-outline';
@@ -54,10 +82,10 @@ const HomeTabs = () => {
         headerShown: false,
       })}>
       <Tab.Screen name="HomeTab" component={HomeScreen} options={{ tabBarLabel: 'Home' }} />
-      <Tab.Screen name="Search" component={SearchScreen} options={{ tabBarLabel: 'Search' }} />
+      <Tab.Screen name="Search" component={HomeScreen} options={{ tabBarLabel: 'Search' }} />
       <Tab.Screen
         name="Create"
-        component={CreateScreen}
+        component={HomeScreen}
         options={{
           tabBarLabel: '',
           tabBarIcon: ({ focused }) => (
@@ -81,41 +109,71 @@ const HomeTabs = () => {
   );
 };
 
-export const AppNavigator = () => {
+// Main Stack Navigator
+const MainNavigator = () => {
+  const { isOnboarded } = useUserStore();
+  
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          headerShown: false,
-          gestureEnabled: true,
+    <MainStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        gestureEnabled: true,
+      }}>
+      {!isOnboarded && (
+        <MainStack.Screen name="HobbySelection" component={HobbySelectionScreen} />
+      )}
+      <MainStack.Screen name="Home" component={HomeTabs} />
+      <MainStack.Screen
+        name="CommunityDetail"
+        component={CommunityDetailScreen}
+        options={{
+          presentation: 'modal',
           cardStyleInterpolator: ({ current }) => ({
             cardStyle: {
-              opacity: current.progress,
+              transform: [
+                {
+                  translateY: current.progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [800, 0],
+                  }),
+                },
+              ],
             },
           }),
-        }}>
-        <Stack.Screen name="HobbySelection" component={HobbySelectionScreen} />
-        <Stack.Screen name="Home" component={HomeTabs} />
-        <Stack.Screen
-          name="CommunityDetail"
-          component={CommunityDetailScreen}
-          options={{
-            presentation: 'modal',
-            cardStyleInterpolator: ({ current }) => ({
-              cardStyle: {
-                transform: [
-                  {
-                    translateY: current.progress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [800, 0],
-                    }),
-                  },
-                ],
-              },
-            }),
-          }}
-        />
-      </Stack.Navigator>
+        }}
+      />
+    </MainStack.Navigator>
+  );
+};
+
+// Root Navigator
+export const AppNavigator = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const user = useUserStore((state) => state.user);
+
+  useEffect(() => {
+    checkAuthState();
+  }, []);
+
+  const checkAuthState = async () => {
+    try {
+      const authenticated = await authService.initialize();
+      setIsAuthenticated(authenticated);
+    } catch (error) {
+      console.error('Auth check failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return <LoadingSpinner fullScreen />;
+  }
+
+  return (
+    <NavigationContainer>
+      {isAuthenticated && user ? <MainNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
 };

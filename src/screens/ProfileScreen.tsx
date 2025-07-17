@@ -12,19 +12,8 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { tokens } from '../theme/tokens';
-
-const USER_DATA = {
-  name: 'Makenna Donin',
-  avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200',
-  location: 'San Francisco, CA',
-  joinDate: 'Joined March 2024',
-  interests: ['Running', 'Yoga', 'Cooking', 'Photography'],
-  stats: {
-    communities: 5,
-    events: 12,
-    friends: 48,
-  },
-};
+import { useUserStore } from '../store';
+import { authService } from '../services/auth';
 
 interface ProfileScreenProps {
   navigation: any;
@@ -33,6 +22,16 @@ interface ProfileScreenProps {
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [locationSharing, setLocationSharing] = useState(true);
+  const { user, interests } = useUserStore();
+
+  const handleSignOut = async () => {
+    try {
+      await authService.signOut();
+      navigation.navigate('Welcome');
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  };
 
   const ProfileStat = ({ label, value }: { label: string; value: number }) => (
     <View style={styles.stat}>
@@ -66,26 +65,31 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.profileInfo}>
-            <Image source={{ uri: USER_DATA.avatar }} style={styles.avatar} />
-            <Text style={styles.name}>{USER_DATA.name}</Text>
+            <Image 
+              source={{ 
+                uri: user?.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200' 
+              }} 
+              style={styles.avatar} 
+            />
+            <Text style={styles.name}>{user?.name || 'User'}</Text>
             <Text style={styles.location}>
               <Icon name="location-outline" size={16} color={tokens.colors.text.tertiary} />
-              {' '}{USER_DATA.location}
+              {' '}{typeof user?.location === 'string' ? user.location : user?.location?.city || 'Location not set'}
             </Text>
-            <Text style={styles.joinDate}>{USER_DATA.joinDate}</Text>
+            <Text style={styles.joinDate}>Joined March 2024</Text>
           </View>
 
           <View style={styles.stats}>
-            <ProfileStat label="Communities" value={USER_DATA.stats.communities} />
-            <ProfileStat label="Events" value={USER_DATA.stats.events} />
-            <ProfileStat label="Friends" value={USER_DATA.stats.friends} />
+            <ProfileStat label="Communities" value={5} />
+            <ProfileStat label="Events" value={12} />
+            <ProfileStat label="Friends" value={48} />
           </View>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Interests</Text>
           <View style={styles.interests}>
-            {USER_DATA.interests.map((interest, index) => (
+            {interests.map((interest: string, index: number) => (
               <View key={index} style={styles.interestTag}>
                 <Text style={styles.interestText}>{interest}</Text>
               </View>
@@ -147,7 +151,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           />
         </View>
 
-        <TouchableOpacity style={styles.logoutButton}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
           <Icon name="log-out-outline" size={20} color={tokens.colors.danger} />
           <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>

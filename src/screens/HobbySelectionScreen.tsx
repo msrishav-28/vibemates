@@ -31,7 +31,7 @@ export const HobbySelectionScreen: React.FC<HobbySelectionScreenProps> = ({ navi
       
       setInterests(selectedLabels);
       setOnboarded(true);
-      navigation.navigate('Home', { interests: selectedInterests });
+      navigation.navigate('Home');
     }
   };
 
