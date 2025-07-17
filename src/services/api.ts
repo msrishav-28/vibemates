@@ -1,202 +1,158 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'https://your-api-endpoint.com/api';
-
+// Fake API that always works - no backend needed!
 class ApiService {
   private token: string | null = null;
+  private fakeUser: any = null;
 
   async init() {
     this.token = await AsyncStorage.getItem('authToken');
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const config: RequestInit = {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(this.token && { Authorization: `Bearer ${this.token}` }),
-        ...options.headers,
-      },
-    };
-
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-
-    const contentType = response.headers.get('content-type');
-    let data: any = null;
-    if (contentType && contentType.includes('application/json')) {
-      data = await response.json();
-    } else {
-      data = await response.text();
-    }
-
-    if (!response.ok) {
-      // If data is a string, use it as the error message; otherwise, try to use data.message
-      const errorMsg = typeof data === 'string' ? data : (data && data.message) ? data.message : `API Error: ${response.status}`;
-      throw new Error(errorMsg);
-    }
-
-    // If data is a string (not JSON), just return it as-is (for success cases)
-    return data;
-  }
-
-  // Auth endpoints
+  // Fake API endpoints that always succeed
   auth = {
     signIn: async (email: string, password: string) => {
-      const response = await this.request<{ token?: string; user: any }>('/auth/signin', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      });
-      if (response.token) {
-        await AsyncStorage.setItem('authToken', response.token);
-        this.token = response.token;
-      } else {
-        await AsyncStorage.removeItem('authToken');
-        this.token = null;
-      }
-      return response;
+      // Always succeed with fake data
+      this.fakeUser = {
+        id: 'user123',
+        name: email.split('@')[0],
+        email: email,
+        interests: [],
+        isOnboarded: false,
+      };
+      this.token = 'fake_token_123';
+      await AsyncStorage.setItem('authToken', this.token);
+      
+      return { token: this.token, user: this.fakeUser };
     },
 
-    signUp: async (userData: {
-      email: string;
-      password: string;
-      name: string;
-      interests: string[];
-    }) => {
-      const response = await this.request<{ token?: string; user: any }>('/auth/signup', {
-        method: 'POST',
-        body: JSON.stringify(userData),
-      });
-      if (response.token) {
-        await AsyncStorage.setItem('authToken', response.token);
-        this.token = response.token;
-      } else {
-        await AsyncStorage.removeItem('authToken');
-        this.token = null;
-      }
-      return response;
+    signUp: async (userData: any) => {
+      // Always succeed with fake data
+      this.fakeUser = {
+        id: 'user123',
+        name: userData.name,
+        email: userData.email,
+        interests: [],
+        isOnboarded: false,
+      };
+      this.token = 'fake_token_123';
+      await AsyncStorage.setItem('authToken', this.token);
+      
+      return { token: this.token, user: this.fakeUser };
     },
 
     signOut: async () => {
       await AsyncStorage.removeItem('authToken');
       this.token = null;
+      this.fakeUser = null;
     },
 
     refreshToken: async () => {
-      const response = await this.request<{ token: string }>('/auth/refresh', {
-        method: 'POST',
-      });
-      
-      await AsyncStorage.setItem('authToken', response.token);
-      this.token = response.token;
-      
-      return response;
+      return { token: 'fake_token_123' };
     },
   };
 
   // Community endpoints
   communities = {
-    getAll: async (filters?: { category?: string; search?: string }) => {
-      const params = new URLSearchParams(filters as any).toString();
-      return this.request<any[]>(`/communities?${params}`);
+    getAll: async () => {
+      // Return mock communities
+      return [
+        {
+          id: '1',
+          title: 'Photography Club',
+          description: 'Local photography enthusiasts',
+          memberCount: 156,
+          tags: ['photography', 'art'],
+          category: 'Art',
+          image: 'https://picsum.photos/300/200?random=1',
+        },
+        {
+          id: '2',
+          title: 'Morning Runners',
+          description: 'Early morning running group',
+          memberCount: 89,
+          tags: ['running', 'fitness'],
+          category: 'Sport',
+          image: 'https://picsum.photos/300/200?random=2',
+        },
+      ];
     },
 
     getById: async (id: string) => {
-      return this.request<any>(`/communities/${id}`);
+      return {
+        id: id,
+        title: 'Photography Club',
+        description: 'Local photography enthusiasts',
+        memberCount: 156,
+        tags: ['photography', 'art'],
+        category: 'Art',
+        image: 'https://picsum.photos/300/200?random=1',
+      };
     },
 
     join: async (communityId: string) => {
-      return this.request(`/communities/${communityId}/join`, {
-        method: 'POST',
-      });
+      return { success: true };
     },
 
     leave: async (communityId: string) => {
-      return this.request(`/communities/${communityId}/leave`, {
-        method: 'POST',
-      });
+      return { success: true };
     },
 
-    create: async (communityData: {
-      title: string;
-      description: string;
-      category: string;
-      tags: string[];
-      image?: string;
-    }) => {
-      return this.request('/communities', {
-        method: 'POST',
-        body: JSON.stringify(communityData),
-      });
+    create: async (communityData: any) => {
+      return { ...communityData, id: 'new123', memberCount: 1 };
     },
   };
 
   // User endpoints
   users = {
-    getNearby: async (location: { latitude: number; longitude: number }, radius = 5000) => {
-      return this.request<any[]>(`/users/nearby`, {
-        method: 'POST',
-        body: JSON.stringify({ location, radius }),
-      });
+    getNearby: async () => {
+      return [];
     },
 
     getProfile: async (userId?: string) => {
-      const endpoint = userId ? `/users/${userId}` : '/users/me';
-      return this.request<any>(endpoint);
+      return this.fakeUser || {
+        id: 'user123',
+        name: 'Test User',
+        email: 'test@example.com',
+        interests: ['Photography', 'Hiking'],
+        isOnboarded: true,
+      };
     },
 
     updateProfile: async (updates: any) => {
-      return this.request('/users/me', {
-        method: 'PATCH',
-        body: JSON.stringify(updates),
-      });
+      // Update the fake user
+      this.fakeUser = { ...this.fakeUser, ...updates };
+      return this.fakeUser;
     },
 
     uploadAvatar: async (imageUri: string) => {
-      const formData = new FormData();
-      formData.append('avatar', {
-        uri: imageUri,
-        type: 'image/jpeg',
-        name: 'avatar.jpg',
-      } as any);
-
-      return this.request('/users/avatar', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        body: formData,
-      });
+      return { avatarUrl: 'https://picsum.photos/100/100' };
     },
   };
 
   // Comments endpoints
   comments = {
     getForCommunity: async (communityId: string) => {
-      return this.request<any[]>(`/communities/${communityId}/comments`);
+      return [];
     },
 
     create: async (communityId: string, text: string) => {
-      return this.request(`/communities/${communityId}/comments`, {
-        method: 'POST',
-        body: JSON.stringify({ text }),
-      });
+      return { id: 'comment123', text };
     },
 
     like: async (commentId: string) => {
-      return this.request(`/comments/${commentId}/like`, {
-        method: 'POST',
-      });
+      return { success: true };
     },
 
     delete: async (commentId: string) => {
-      return this.request(`/comments/${commentId}`, {
-        method: 'DELETE',
-      });
+      return { success: true };
     },
   };
+
+  // Fake request method (not used but kept for compatibility)
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    return {} as T;
+  }
 }
 
 export const api = new ApiService();

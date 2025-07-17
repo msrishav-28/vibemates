@@ -45,13 +45,16 @@ export const HobbySelectionScreen = () => {
 
     setLoading(true);
     try {
-      // This step is optional but good practice: save the hobbies to the backend
-      await api.users.updateProfile({ interests: selectedHobbies });
+      // Update the user profile with interests AND onboarding status
+      await api.users.updateProfile({ 
+        interests: selectedHobbies,
+        isOnboarded: true  // ← MAKE SURE THIS LINE IS HERE
+      });
 
-      // This is the crucial step that tells the app onboarding is complete
+      // Update local state
       setOnboarded(true);
-
-      // No navigation is needed. The AppNavigator will react to the state change.
+      
+      console.log('--- Onboarding completed successfully! ---');
     } catch (error) {
       console.error("Failed to complete onboarding:", error);
       Alert.alert('Error', 'Could not save your hobbies. Please try again.');

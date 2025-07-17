@@ -43,6 +43,7 @@ export interface User {
   bio?: string;
   interests: string[];
   joinedCommunities: string[];
+  isOnboarded?: boolean;  // ← ADDED THIS LINE
   location?: {
     latitude: number;
     longitude: number;
